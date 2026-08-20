@@ -534,7 +534,10 @@
             "Parse UTMP",
             "Parse WTMP",
             "Parse BTMP",
-            "Parse lastlog"
+            "Parse lastlog",
+            "Parse Property List",
+            "Parse Windows LNK",
+            "Known hosts to Hashcat"
         ]
     },
     {
