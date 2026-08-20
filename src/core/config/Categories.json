@@ -529,6 +529,15 @@
         ]
     },
     {
+        "name": "DFIR",
+        "ops": [
+            "Parse UTMP",
+            "Parse WTMP",
+            "Parse BTMP",
+            "Parse lastlog"
+        ]
+    },
+    {
         "name": "Forensics",
         "ops": [
             "Detect File Type",
