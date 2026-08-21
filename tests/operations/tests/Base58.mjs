@@ -119,4 +119,26 @@ TestRegister.addTests([
             },
         ],
     },
+    {
+        name: "From Base58: remove non-alphabet characters",
+        input: "StV1D L6CwTryKyV",
+        expectedOutput: "hello world",
+        recipeConfig: [
+            {
+                op: "From Base58",
+                args: ["123456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz", true],
+            },
+        ],
+    },
+    {
+        name: "From Base58: reject non-alphabet characters",
+        input: "StV1D L6CwTryKyV",
+        expectedOutput: "Char ' ' at position 5 not in alphabet",
+        recipeConfig: [
+            {
+                op: "From Base58",
+                args: ["123456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz", false],
+            },
+        ],
+    },
 ]);

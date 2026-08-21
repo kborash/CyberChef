@@ -160,6 +160,95 @@ export function fromWords(words) {
 }
 
 /**
+ * Parse the structure and checksum of a Bech32/Bech32m string without
+ * requiring the checksum to be valid.
+ *
+ * Structural errors still throw an OperationError. The HRP is normalised to
+ * lowercase, and dataWords does not include the final six checksum words.
+ *
+ * @param {string} str - Bech32/Bech32m encoded string
+ * @returns {{
+ *   hrp: string,
+ *   dataWords: number[],
+ *   checksumWords: number[],
+ *   checksumEncoding: (string|null),
+ *   checksumValid: boolean
+ * }} Parsed Bech32 metadata
+ */
+export function parse(str) {
+    // Check for empty input
+    if (!str || str.length === 0) {
+        throw new OperationError("Input cannot be empty.");
+    }
+
+    // Check maximum length
+    if (str.length > 90) {
+        throw new OperationError(`Invalid Bech32 string: exceeds maximum length of 90 characters (got ${str.length}).`);
+    }
+
+    // Check for mixed case
+    const hasUpper = /[A-Z]/.test(str);
+    const hasLower = /[a-z]/.test(str);
+    if (hasUpper && hasLower) {
+        throw new OperationError("Invalid Bech32 string: mixed case is not allowed. Use all uppercase or all lowercase.");
+    }
+
+    // Convert to lowercase for processing
+    str = str.toLowerCase();
+
+    // Find separator (last occurrence of '1')
+    const sepIndex = str.lastIndexOf("1");
+    if (sepIndex === -1) {
+        throw new OperationError("Invalid Bech32 string: no separator '1' found.");
+    }
+
+    if (sepIndex === 0) {
+        throw new OperationError("Invalid Bech32 string: Human-Readable Part (HRP) cannot be empty.");
+    }
+
+    if (sepIndex + 7 > str.length) {
+        throw new OperationError("Invalid Bech32 string: data part is too short (minimum 6 characters for checksum).");
+    }
+
+    // Extract HRP and data part
+    const hrp = str.substring(0, sepIndex);
+    const dataPart = str.substring(sepIndex + 1);
+
+    // Validate HRP characters
+    for (let i = 0; i < hrp.length; i++) {
+        const c = hrp.charCodeAt(i);
+        if (c < 33 || c > 126) {
+            throw new OperationError(`HRP contains invalid character at position ${i}.`);
+        }
+    }
+
+    // Decode data characters to 5-bit values
+    const data = [];
+    for (let i = 0; i < dataPart.length; i++) {
+        const c = dataPart[i];
+        if (CHARSET_REV[c] === undefined) {
+            throw new OperationError(`Invalid character '${c}' at position ${sepIndex + 1 + i}.`);
+        }
+        data.push(CHARSET_REV[c]);
+    }
+
+    let checksumEncoding = null;
+    if (verifyChecksum(hrp, data, "Bech32")) {
+        checksumEncoding = "Bech32";
+    } else if (verifyChecksum(hrp, data, "Bech32m")) {
+        checksumEncoding = "Bech32m";
+    }
+
+    return {
+        hrp,
+        dataWords: data.slice(0, -6),
+        checksumWords: data.slice(-6),
+        checksumEncoding,
+        checksumValid: checksumEncoding !== null
+    };
+}
+
+/**
  * Encode data to Bech32/Bech32m string
  *
  * @param {string} hrp - Human-readable part
@@ -234,61 +323,9 @@ export function encode(hrp, data, encoding = "Bech32", segwit = false) {
  * @returns {{hrp: string, data: number[]}} - Decoded HRP and data bytes
  */
 export function decode(str, encoding = "Auto-detect") {
-    // Check for empty input
-    if (!str || str.length === 0) {
-        throw new OperationError("Input cannot be empty.");
-    }
-
-    // Check maximum length
-    if (str.length > 90) {
-        throw new OperationError(`Invalid Bech32 string: exceeds maximum length of 90 characters (got ${str.length}).`);
-    }
-
-    // Check for mixed case
-    const hasUpper = /[A-Z]/.test(str);
-    const hasLower = /[a-z]/.test(str);
-    if (hasUpper && hasLower) {
-        throw new OperationError("Invalid Bech32 string: mixed case is not allowed. Use all uppercase or all lowercase.");
-    }
-
-    // Convert to lowercase for processing
-    str = str.toLowerCase();
-
-    // Find separator (last occurrence of '1')
-    const sepIndex = str.lastIndexOf("1");
-    if (sepIndex === -1) {
-        throw new OperationError("Invalid Bech32 string: no separator '1' found.");
-    }
-
-    if (sepIndex === 0) {
-        throw new OperationError("Invalid Bech32 string: Human-Readable Part (HRP) cannot be empty.");
-    }
-
-    if (sepIndex + 7 > str.length) {
-        throw new OperationError("Invalid Bech32 string: data part is too short (minimum 6 characters for checksum).");
-    }
-
-    // Extract HRP and data part
-    const hrp = str.substring(0, sepIndex);
-    const dataPart = str.substring(sepIndex + 1);
-
-    // Validate HRP characters
-    for (let i = 0; i < hrp.length; i++) {
-        const c = hrp.charCodeAt(i);
-        if (c < 33 || c > 126) {
-            throw new OperationError(`HRP contains invalid character at position ${i}.`);
-        }
-    }
-
-    // Decode data characters to 5-bit values
-    const data = [];
-    for (let i = 0; i < dataPart.length; i++) {
-        const c = dataPart[i];
-        if (CHARSET_REV[c] === undefined) {
-            throw new OperationError(`Invalid character '${c}' at position ${sepIndex + 1 + i}.`);
-        }
-        data.push(CHARSET_REV[c]);
-    }
+    const parsed = parse(str);
+    const hrp = parsed.hrp;
+    const data = parsed.dataWords.concat(parsed.checksumWords);
 
     // Verify checksum
     let usedEncoding;
@@ -314,7 +351,7 @@ export function decode(str, encoding = "Auto-detect") {
     }
 
     // Remove checksum (last 6 values)
-    const words = data.slice(0, data.length - 6);
+    const words = parsed.dataWords;
 
     // Check if this is likely a SegWit address (Bitcoin, Litecoin, etc.)
     // For SegWit, the first 5-bit word is the witness version (0-16)

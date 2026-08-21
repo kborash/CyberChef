@@ -543,6 +543,7 @@
             "Dump SQLite Table",
             "Query SQLite",
             "Export SQLite Database",
+            "Cryptocurrency Identifier and Address Inspector",
             "Known hosts to Hashcat"
         ]
     },

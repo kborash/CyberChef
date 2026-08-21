@@ -6,8 +6,7 @@
 
 import Operation from "../Operation.mjs";
 import Utils from "../Utils.mjs";
-import OperationError from "../errors/OperationError.mjs";
-import {ALPHABET_OPTIONS} from "../lib/Base58.mjs";
+import {ALPHABET_OPTIONS, decode} from "../lib/Base58.mjs";
 
 /**
  * From Base58 operation
@@ -59,53 +58,10 @@ class FromBase58 extends Operation {
      */
     run(input, args) {
         let alphabet = args[0] || ALPHABET_OPTIONS[0].value;
-        const removeNonAlphaChars = args[1] === undefined ? true : args[1],
-            result = [];
+        const removeNonAlphaChars = args[1] === undefined ? true : args[1];
 
         alphabet = Utils.expandAlphRange(alphabet).join("");
-
-        if (alphabet.length !== 58 ||
-            [].unique.call(alphabet).length !== 58) {
-            throw new OperationError("Alphabet must be of length 58");
-        }
-
-        if (input.length === 0) return [];
-
-        let zeroPrefix = 0;
-        for (let i = 0; i < input.length && input[i] === alphabet[0]; i++) {
-            zeroPrefix++;
-        }
-
-        [].forEach.call(input, function(c, charIndex) {
-            const index = alphabet.indexOf(c);
-
-            if (index === -1) {
-                if (removeNonAlphaChars) {
-                    return;
-                } else {
-                    throw new OperationError(`Char '${c}' at position ${charIndex} not in alphabet`);
-                }
-            }
-
-            let carry = index;
-
-            for (let i = 0; i < result.length; i++) {
-                carry += result[i] * 58;
-                result[i] = carry & 0xFF;
-                carry = carry >> 8;
-            }
-
-            while (carry > 0) {
-                result.push(carry & 0xFF);
-                carry = carry >> 8;
-            }
-        });
-
-        while (zeroPrefix--) {
-            result.push(0);
-        }
-
-        return result.reverse();
+        return decode(input, alphabet, removeNonAlphaChars);
     }
 
 }

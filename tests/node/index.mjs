@@ -24,11 +24,13 @@ import "./tests/Dish.mjs";
 import "./tests/NodeDish.mjs";
 import "./tests/Utils.mjs";
 import "./tests/Categories.mjs";
+import "./tests/Bech32.mjs";
 import "./tests/ToHTMLEntity.mjs";
 import "./tests/lib/BigIntUtils.mjs";
 import "./tests/lib/ChartsProtocolPrototypePollution.mjs";
 import "./tests/ParseQRCode.mjs";
 import "./tests/SQLiteDFIR.mjs";
+import "./tests/Cryptocurrency.mjs";
 
 const testStatus = {
     allTestsPassing: true,
