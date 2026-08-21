@@ -537,6 +537,7 @@
             "Parse lastlog",
             "Parse Property List",
             "Parse Windows LNK",
+            "Parse MBOX",
             "Known hosts to Hashcat"
         ]
     },
