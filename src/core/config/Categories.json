@@ -538,6 +538,11 @@
             "Parse Property List",
             "Parse Windows LNK",
             "Parse MBOX",
+            "SQLite Database Info",
+            "List SQLite Tables",
+            "Dump SQLite Table",
+            "Query SQLite",
+            "Export SQLite Database",
             "Known hosts to Hashcat"
         ]
     },

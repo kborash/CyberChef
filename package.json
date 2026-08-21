@@ -182,6 +182,7 @@
     "sortablejs": "^1.15.7",
     "split.js": "^1.6.5",
     "sql-formatter": "^15.8.2",
+    "sql.js": "1.14.2",
     "ssdeep.js": "0.0.3",
     "stream-browserify": "^3.0.0",
     "tesseract.js": "^7.0.0",

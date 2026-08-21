@@ -99,6 +99,10 @@ module.exports = {
                     context: "node_modules/node-forge/dist",
                     from: "prime.worker.min.js",
                     to: "assets/forge/"
+                }, {
+                    context: "node_modules/sql.js/dist",
+                    from: "sql-wasm-browser.wasm",
+                    to: "modules/"
                 }
             ]
         }),
@@ -118,6 +122,9 @@ module.exports = {
         extensions: [".mjs", ".js", ".json"], // Allows importing files without extensions
         alias: {
             jquery: "jquery/src/jquery",
+            // Use sql.js' browser-only build in Webpack while retaining the
+            // asm.js build for Node API consumers.
+            "sql.js/dist/sql-asm.js$": require.resolve("sql.js/dist/sql-wasm-browser.js"),
         },
         fallback: {
             "assert": require.resolve("assert/"),
